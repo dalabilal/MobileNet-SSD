@@ -11,6 +11,7 @@ import random
 import cv2
 import numpy as np
 from sklearn.cluster import KMeans
+import RPi.GPIO as GPIO
 
 # Configure logging
 logging.basicConfig(
@@ -52,7 +53,12 @@ def speak(text):
     except Exception as e:
         logger.error(f"TTS error: {str(e)}")
         print(f"Error with text-to-speech: {str(e)}")
+
 def wait_for_face():
+    PIR_PIN = 17
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(PIR_PIN, GPIO.IN)
+    
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
@@ -72,7 +78,7 @@ def wait_for_face():
         faces = face_cascade.detectMultiScale(gray, 1.3, 5)
 
         # If face is detected
-        if len(faces) > 0:
+        if len(faces) > 0 and GPIO.input(PIR_PIN):
             print("Face detected!")
             speak("Hello! How can I assist you?")
             cap.release()
