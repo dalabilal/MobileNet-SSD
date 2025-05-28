@@ -1,0 +1,9 @@
+2025-05-28 15:03:25,536 - INFO - Assistant: Marvin is ready.
+2025-05-28 15:03:35,621 - WARNING - Listen error: listening timed out while waiting for phrase to start
+2025-05-28 15:03:39,454 - INFO - You said: Marvin
+2025-05-28 15:03:39,472 - INFO - Assistant: Yes? i am marvin created by programer engineer marwan anjoul
+2025-05-28 15:03:53,760 - WARNING - Listen error: 
+2025-05-28 15:03:53,766 - INFO - Assistant: Can you repeat that?
+2025-05-28 15:04:01,821 - INFO - You said: out
+2025-05-28 15:04:01,838 - INFO - Assistant: I’m not sure how to help with that.
+2025-05-28 15:04:12,204 - INFO - You said: outfit
