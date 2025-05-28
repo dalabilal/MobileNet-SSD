@@ -12,6 +12,7 @@ import cv2
 import numpy as np
 from sklearn.cluster import KMeans
 import RPi.GPIO as GPIO
+import threading
 
 # Configure logging
 logging.basicConfig(
@@ -54,6 +55,26 @@ def speak(text):
         logger.error(f"TTS error: {str(e)}")
         print(f"Error with text-to-speech: {str(e)}")
 
+def wait_for_wake_up():
+    triggered = threading.Event()
+    
+    def face_detection_thread():
+        if wait_for_face():
+            triggered.set()
+     
+    def voice_detection_thread():
+        if wait_for_wake_word():
+            triggered.set()
+            
+    face_thread = threading.Thread(target=face_detection_thread)
+    voice_thread = threading.Thread(target=voice_detection_thread)
+    
+    face_thread.start()
+    voice_thread.start()
+    
+    triggered.wait()
+    
+                 
 def wait_for_face():
     PIR_PIN = 17
     GPIO.setmode(GPIO.BCM)
@@ -407,7 +428,7 @@ def voice_assistant():
     speak("Marvin voice assistant is ready. Say 'Marvin' to activate me.")
     try:
         while True:
-            if wait_for_wake_word() or wait_for_face():
+            if  wait_for_wake_up():
                 active = True
                 while active:
                     user_input = listen()
