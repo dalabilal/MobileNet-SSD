@@ -12,7 +12,6 @@ import cv2
 import numpy as np
 from sklearn.cluster import KMeans
 import RPi.GPIO as GPIO
-import threading
 
 # Configure logging
 logging.basicConfig(
@@ -55,33 +54,7 @@ def speak(text):
         logger.error(f"TTS error: {str(e)}")
         print(f"Error with text-to-speech: {str(e)}")
 
-def wait_for_wake_up():
-    triggered = threading.Event()
-    stop_thread = threading.Event()
-    
-    def face_detection_thread():
-        wait_for_face(stop_thread, triggered)
-            
-     
-    def voice_detection_thread():
-        if wait_for_wake_word():
-            triggered.set()
-            stop_thread.set()
-            
-    face_thread = threading.Thread(target=face_detection_thread)
-    voice_thread = threading.Thread(target=voice_detection_thread)
-    
-    face_thread.start()
-    voice_thread.start()
-    
-    triggered.wait()
-    stop_thread.set()
-    
-    face_thread.join()
-    voice_thread.join()
-    
-                 
-def wait_for_face(stop_event, triggered_event):
+def wait_for_face():
     PIR_PIN = 17
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(PIR_PIN, GPIO.IN)
@@ -95,28 +68,36 @@ def wait_for_face(stop_event, triggered_event):
 
     # print("Waiting for face detection...")
     # speak("I am ready. Please show your face to start.")
-    try:
-        while not stop_event.is_set():
-            ret, frame = cap.read()
-            if not ret:
-                continue
 
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            continue
 
-            # If face is detected
-            if len(faces) > 0 and GPIO.input(PIR_PIN):
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+        
+        command = listen()
+        if command and WAKE_WORD in command:
+            speak("Yes? How can I assist you?")
+            cap.release()
+            cv2.destroyAllWindows()
+            return True
+        
+        # If face is detected
+        if (len(faces) > 0 and GPIO.input(PIR_PIN)):
                 print("Face detected!")
                 speak("Hello! How can I assist you?")
-                triggered_event.set()
+                cap.release()
+                cv2.destroyAllWindows()
                 return True
 
-            # cv2.imshow("Face Detection (Press Q to quit)", frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-    finally:
-        cap.release()
-        cv2.destroyAllWindows()
+        # cv2.imshow("Face Detection (Press Q to quit)", frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
     return False
 # === Speech Recognition ===
 def listen():
@@ -433,7 +414,7 @@ def voice_assistant():
     speak("Marvin voice assistant is ready. Say 'Marvin' to activate me.")
     try:
         while True:
-            if  wait_for_wake_up():
+            if wait_for_face():
                 active = True
                 while active:
                     user_input = listen()
