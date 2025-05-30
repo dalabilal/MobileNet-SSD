@@ -139,7 +139,7 @@ def analyze_outfit():
 
         cap = cv2.VideoCapture(0)
         if not cap.isOpened():
-            speak("I couldn't open the camera.")
+            print("I couldn't open the camera.")
             return
 
         speak("Camera opened. Showing for 10 seconds. Please stand still.")
@@ -150,23 +150,22 @@ def analyze_outfit():
         while True:
             ret, frame = cap.read()
             if not ret:
-                speak("Failed to read from camera.")
+                print("Failed to read from camera.")
                 break
 
             cv2.imshow("Outfit Analyzer", frame)
 
-            # Exit after 5 seconds
+            # Exit after 10 seconds
             if time.time() - start_time > 10:
                 break
 
-            # Also allow manual exit with 'q'
+            # Manual exit with 'q'
             if cv2.waitKey(1) & 0xFF == ord('q'):
-                speak("Camera closed.")
+                print("Camera closed.")
                 cap.release()
                 cv2.destroyAllWindows()
                 return
 
-        # Run person detection and analysis after camera closes
         h, w = frame.shape[:2]
         blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)),
                                      0.007843, (300, 300), 127.5)
@@ -178,7 +177,7 @@ def analyze_outfit():
             confidence = detections[0, 0, i, 2]
             if confidence > 0.4:
                 idx = int(detections[0, 0, i, 1])
-                if idx != 15:  # Not a person
+                if idx != 15:  # 15 is person class in COCO
                     continue
 
                 box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
@@ -186,9 +185,31 @@ def analyze_outfit():
                 startX, startY = max(0, startX), max(0, startY)
                 endX, endY = min(w, endX), min(h, endY)
 
+                # Draw a rectangle around the detected person
+                cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 255, 0), 2)
+
+                # Draw top rectangle (shirt region)
+                topY1 = int(startY + (endY - startY) * 0.15)
+                topY2 = int(startY + (endY - startY) * 0.40)
+                cv2.rectangle(frame, (startX + int((endX - startX) * 0.30), topY1),
+                            (startX + int((endX - startX) * 0.70), topY2), (255, 0, 0), 2)
+
+                # Draw bottom rectangle (pants region)
+                botY1 = int(startY + (endY - startY) * 0.60)
+                botY2 = int(startY + (endY - startY) * 0.85)
+                cv2.rectangle(frame, (startX + int((endX - startX) * 0.30), botY1),
+                            (startX + int((endX - startX) * 0.70), botY2), (0, 0, 255), 2)
+
+                # Show the final frame with rectangles
+                cv2.imshow("Detected Person and Outfit Regions", frame)
+                cv2.waitKey(3000)  # Show for 3 seconds
+                cv2.destroyAllWindows()
+
+                # Extract ROI for analysis
                 roi = frame[startY:endY, startX:endX]
                 person_found = True
                 break
+
 
         cap.release()
         cv2.destroyAllWindows()
@@ -196,11 +217,10 @@ def analyze_outfit():
         if person_found and roi is not None and roi.size > 0:
             analyze_colors_from_roi(roi)
         else:
-            speak("I couldn't detect a person to analyze.")
+            print("I couldn't detect a person to analyze.")
 
     except Exception as e:
-        speak("Sorry, I couldn't analyze your outfit.")
-        logger.error(f"Outfit analysis error: {str(e)}")
+        print(f"Sorry, I couldn't analyze your outfit. Error: {str(e)}")
 
 def preprocess_image_cv(region):
     region = cv2.resize(region, (100, 100))
@@ -237,36 +257,53 @@ def rgb_to_hsv_cv(rgb):
     return h, s, v
 
 def get_closest_color_cv(h, s, v):
-    color_ranges = [
-        ("red", [(0, 10), (350, 360)], 0.5, 0.2, 1.0, 1.0),
-        ("orange", [(11, 40)], 0.5, 0.2, 1.0, 1.0),
-        ("yellow", [(41, 65)], 0.4, 0.4, 1.0, 1.0),
-        ("green", [(66, 170)], 0.4, 0.2, 1.0, 1.0),
-        ("blue", [(171, 260)], 0.4, 0.2, 1.0, 1.0),
-        ("purple", [(261, 320)], 0.3, 0.2, 1.0, 1.0),
-        ("brown", [(10, 40)], 0.3, 0.1, 0.7, 0.6),
-    ]
-
+    # Handle black, white, gray first
     if v <= 0.15:
         return "black"
-    if s <= 0.15 and v >= 0.85:
+    if s <= 0.15 and v >= 0.70:
         return "white"
-    if s <= 0.15 and 0.15 < v < 0.85:
+    if s <= 0.15 and 0.15 < v < 0.70:
         return "gray"
+
+    # Extended color ranges with light/dark variants
+    color_ranges = [
+        # name, hue ranges, sat min, val min, sat max, val max
+        ("red", [(0, 10), (350, 360)], 0.5, 0.2, 1.0, 1.0),
+        ("pink", [(320, 350)], 0.2, 0.7, 0.5, 1.0),
+        ("orange", [(11, 40)], 0.5, 0.4, 1.0, 1.0),
+        ("yellow", [(41, 65)], 0.4, 0.4, 1.0, 1.0),
+        ("green", [(66, 170)], 0.4, 0.2, 1.0, 1.0),
+        ("blue", [(171, 260)], 0.4, 0.3, 1.0, 1.0),
+        ("purple", [(261, 320)], 0.3, 0.2, 1.0, 1.0),
+        ("brown", [(10, 40)], 0.3, 0.1, 0.7, 0.6),
+        ("pale beige", [(25, 35)], 0.1, 0.85, 0.3, 1.0),
+        ("rosy", [(345, 360)], 0.2, 0.7, 0.4, 0.85),
+    ]
 
     for name, hue_ranges, sat_min, val_min, sat_max, val_max in color_ranges:
         for (h_min, h_max) in hue_ranges:
-            if h_min <= h <= h_max and sat_min <= s <= sat_max and val_min <= v <= val_max:
-                return name
+            # Handle hue wrap around
+            if h_min > h_max:
+                if (h >= h_min or h <= h_max) and sat_min <= s <= sat_max and val_min <= v <= val_max:
+                    return name
+            else:
+                if h_min <= h <= h_max and sat_min <= s <= sat_max and val_min <= v <= val_max:
+                    return name
 
+    # Fallback - find closest by hue (ignoring saturation and value)
     main_hues = {
         "red": 0,
+        "pink": 335,
         "orange": 25,
         "yellow": 55,
         "green": 120,
         "blue": 215,
         "purple": 290,
         "brown": 25,
+        "pale beige": 30,
+        "black": 0,
+        "white": 0,
+        "gray": 0,
     }
 
     def hue_distance(a, b):
@@ -283,13 +320,15 @@ def get_closest_color_cv(h, s, v):
 
     return closest_color
 
+
+
 def analyze_colors_from_roi(image):
     h, w = image.shape[:2]
     top = image[int(h * 0.15):int(h * 0.40), int(w * 0.30):int(w * 0.70)]
     bottom = image[int(h * 0.60):int(h * 0.85), int(w * 0.30):int(w * 0.70)]
 
     if top.size == 0 or bottom.size == 0:
-        speak("I couldn't find your outfit clearly.")
+        print("I couldn't find your outfit clearly.")
         return
 
     top_pre = preprocess_image_cv(top)
@@ -307,22 +346,33 @@ def analyze_colors_from_roi(image):
     speak(f"Your shirt is {top_color}, and your pants is {bottom_color}.")
 
     matching = {
-        "red": ["black", "white", "blue", "gray"],
-        "orange": ["blue", "white", "black"],
-        "yellow": ["blue", "gray", "black"],
+        "red": ["black", "white", "gray"],
+        "orange": ["white", "black"],
+        "yellow": ["white" ,"gray", "black"],
         "green": ["black", "white", "brown"],
         "blue": ["white", "gray", "khaki"],
         "purple": ["black", "white", "gray"],
-        "brown": ["white", "blue", "green"],
-        "black": ["red", "yellow", "white"],
+        "brown": ["white", "black", "green"],
+        "black": ["red", "blue", "white"],
         "white": ["black", "blue", "red"],
-        "gray": ["blue", "white", "black"],
+        "gray": ["red", "white", "black"],
+        "pink": ["gray", "white", "black"],
+        "pale beige": ["brown", "white", "black"],
     }
-
-    if top_color in matching and bottom_color in matching[top_color]:
+    
+    business_combinations = [
+    ("blue", "white"), ("white", "blue"),
+    ("black", "white"), ("white", "black"),
+    ("gray", "white"), ("white", "gray"),
+    ("gray", "black"), ("black", "gray"),
+    ("gray", "blue"), ("blue", "gray")
+]
+    if (top_color, bottom_color) in business_combinations:
+        speak("This outfit is suitable for a business interview or meeting.")
+    elif top_color in matching and bottom_color in matching[top_color]:
         speak("That's a great combination!")
     elif bottom_color in matching and top_color in matching[bottom_color]:
-        speak("Looks good together!")
+        print("Looks good together!")
     else:
         suggestion = ", ".join(matching.get(top_color, []))
         speak(f"You can try {top_color} with {suggestion}.")
