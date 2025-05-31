@@ -82,6 +82,7 @@ def wait_for_face():
         
         command = listen()
         if command and WAKE_WORD in command:
+            os.system("vcgencmd display_power 1")
             speak("Yes? How can I assist you?")
             cap.release()
             cv2.destroyAllWindows()
@@ -90,6 +91,7 @@ def wait_for_face():
         # If face is detected
         if (len(faces) > 0 and GPIO.input(17)):
                 print("Face detected!")
+                os.system("vcgencmd display_power 1")
                 speak("Hi there! How can I assist you?")
                 cap.release()
                 cv2.destroyAllWindows()
@@ -477,6 +479,7 @@ def handle_user_input(user_input):
 def voice_assistant():
     # speak("Marvin voice assistant is ready. Say 'Marvin' to activate me.")
     try:
+        os.system("vcgencmd display_power 0")
         while True:
             if wait_for_face():
                 active = True
@@ -486,7 +489,8 @@ def voice_assistant():
                         active = handle_user_input(user_input)
                     else:
                         speak("I didn't catch that. Could you repeat?")
-                speak("Marvin is now in standby mode. Say 'Marvin' to activate me again.")
+                speak("Marvin is now in standby mode.")
+                os.system("vcgencmd display_power 0")
     except KeyboardInterrupt:
         speak("Voice assistant shutting down. Goodbye!")
     except Exception as e:
