@@ -136,8 +136,9 @@ def wait_for_wake_word():
 # === Outfit Analyzer Function ===
 def analyze_outfit():
     try:
-        prototxt = "deploy.prototxt"
-        model = "mobilenet_iter_73000.caffemodel"
+        BASE_DIR = "/home/smart/Desktop/voice/voic_assistant/MobileNet-SSD"
+        prototxt = os.path.join(BASE_DIR, "deploy.prototxt")
+        model = os.path.join(BASE_DIR, "mobilenet_iter_73000.caffemodel")
         net = cv2.dnn.readNetFromCaffe(prototxt, model)
 
         cap = cv2.VideoCapture(0)
@@ -446,7 +447,7 @@ def handle_user_input(user_input):
                 city = words[i + 1].capitalize()
         speak(get_weather(city))
     elif "take picture" in user_input:
-        subprocess.call(["python", "take_picture.py"])
+        subprocess.call(["/home/smart/Desktop/voice/rhasspy/bin/python","/home/smart/Desktop/voice/voic_assistant/MobileNet-SSD/take_picture.py"])
         speak("QR code has expired. Enjoy!")
     elif any(word in user_input for word in ["look up", "search", "tell me about", "what is", "who is"]):
         query = user_input
