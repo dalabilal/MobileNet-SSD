@@ -89,14 +89,14 @@ def wait_for_face():
         # If face is detected
         if (len(faces) > 0 and GPIO.input(PIR_PIN)):
                 print("Face detected!")
-                speak("Hello! How can I assist you?")
+                speak("Hi there! How can I assist you?")
                 cap.release()
                 cv2.destroyAllWindows()
                 return True
 
-        cv2.imshow("Face Detection (Press Q to quit)", frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+        # cv2.imshow("Face Detection (Press Q to quit)", frame)
+        # if cv2.waitKey(1) & 0xFF == ord('q'):
+        #     break
 
     cap.release()
     cv2.destroyAllWindows()
