@@ -145,22 +145,27 @@ def analyze_outfit():
             return
 
         speak("Camera opened. Showing for 10 seconds. Please stand still.")
+       
         start_time = time.time()
         roi = None
         frame = None
-
+  
         while True:
             ret, frame = cap.read()
             if not ret:
                 print("Failed to read from camera.")
                 break
 
-            cv2.imshow("Outfit Analyzer", frame)
-
+          
+           
             # Exit after 10 seconds
-            if time.time() - start_time > 10:
+            remaining = int(10 - (time.time() - start_time))
+            if remaining < 0:
                 break
-
+            cv2.putText(frame, f"{remaining} second", (30, 60),cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3)     
+            
+            cv2.imshow("Outfit Analyzer", frame)
+            
             # Manual exit with 'q'
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 print("Camera closed.")
@@ -440,8 +445,8 @@ def handle_user_input(user_input):
                 city = words[i + 1].capitalize()
         speak(get_weather(city))
     elif "take picture" in user_input:
-        speak("Taking a picture now.")
         subprocess.call(["python", "take_picture.py"])
+        speak("QR code has expired. Enjoy!")
     elif any(word in user_input for word in ["look up", "search", "tell me about", "what is", "who is"]):
         query = user_input
         for phrase in ["tell me about", "look up", "search for", "what is", "who is"]:
