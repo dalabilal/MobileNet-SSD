@@ -14,6 +14,7 @@ import cv2
 import numpy as np
 from sklearn.cluster import KMeans
 import RPi.GPIO as GPIO
+from DHT22sensor import get_room_temperature
 
 # Configure logging
 logging.basicConfig(
@@ -458,6 +459,8 @@ def handle_user_input(user_input):
     elif "see me" in user_input or "analyze outfit" in user_input:
         speak("Analyzing your outfit now.")
         analyze_outfit()
+    elif "room temperature" in user_input or "temperature" in user_input:
+        speak(get_room_temperature())
     elif any(word in user_input for word in ["exit", "stop", "goodbye", "bye"]):
         speak("Goodbye! Have a great day!")
         return False
