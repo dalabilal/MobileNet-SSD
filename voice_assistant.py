@@ -59,7 +59,7 @@ def speak(text):
 def wait_for_face():
     PIR_PIN = 17
     GPIO.setmode(GPIO.BCM)
-    GPIO.setup(PIR_PIN, GPIO.IN)
+    GPIO.setup(17, GPIO.IN)
     
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     cap = cv2.VideoCapture(0)
@@ -87,7 +87,7 @@ def wait_for_face():
             return True
         
         # If face is detected
-        if (len(faces) > 0 and GPIO.input(PIR_PIN)):
+        if (len(faces) > 0 and GPIO.input(17)):
                 print("Face detected!")
                 speak("Hi there! How can I assist you?")
                 cap.release()
@@ -95,8 +95,8 @@ def wait_for_face():
                 return True
 
         # cv2.imshow("Face Detection (Press Q to quit)", frame)
-        # if cv2.waitKey(1) & 0xFF == ord('q'):
-        #     break
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
     cap.release()
     cv2.destroyAllWindows()
@@ -224,7 +224,7 @@ def analyze_outfit():
         if person_found and roi is not None and roi.size > 0:
             analyze_colors_from_roi(roi)
         else:
-            print("I couldn't detect a person to analyze.")
+            speak("I couldn't detect a person to analyze.")
 
     except Exception as e:
         print(f"Sorry, I couldn't analyze your outfit. Error: {str(e)}")
@@ -379,7 +379,7 @@ def analyze_colors_from_roi(image):
     elif top_color in matching and bottom_color in matching[top_color]:
         speak("That's a great combination!")
     elif bottom_color in matching and top_color in matching[bottom_color]:
-        print("Looks good together!")
+        speak("Looks good together!")
     else:
         suggestion = ", ".join(matching.get(top_color, []))
         speak(f"You can try {top_color} with {suggestion}.")

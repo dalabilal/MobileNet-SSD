@@ -5,6 +5,7 @@ import threading
 import os
 import socket
 import time
+from gtts import gTTS
 
 # === SETTINGS ===
 image_filename = "image.jpg"
@@ -13,10 +14,16 @@ delay_before_capture = 10  # seconds
 display_duration = 30      # seconds
 ngrok_url = "https://2080-24-42-76-134.ngrok-free.app"  # Your ngrok HTTPS URL
 
-# === Optional speak() function (remove if you're using your voice assistant)
+# === Optional speak() function (remove if you're using your voice assistant
 def speak(text):
-    print(f"[Assistant]: {text}")
-
+    print(f"{text}")
+    try:
+        tts = gTTS(text=text, lang='en')
+        tts.save("speak.mp3")
+        os.system("mpg321 speak.mp3 > /dev/null 2>&1")
+        time.sleep(0.5)
+    except Exception as e:
+        print(f"error in speak(): {str(e)}")
 # === FUNCTIONS ===
 
 def capture_image(filename):
