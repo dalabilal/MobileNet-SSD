@@ -1,3 +1,5 @@
+import subprocess
+from click import command
 import speech_recognition as sr
 from gtts import gTTS
 import datetime
@@ -66,7 +68,7 @@ def wait_for_face():
         speak("Camera not accessible. Please check the connection.")
         return False
 
-    # print("Waiting for face detection...")
+    print("Waiting for face detection...")
     # speak("I am ready. Please show your face to start.")
 
     while True:
@@ -92,7 +94,7 @@ def wait_for_face():
                 cv2.destroyAllWindows()
                 return True
 
-        # cv2.imshow("Face Detection (Press Q to quit)", frame)
+        cv2.imshow("Face Detection (Press Q to quit)", frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
@@ -437,6 +439,9 @@ def handle_user_input(user_input):
             if word == "in" and i < len(words) - 1:
                 city = words[i + 1].capitalize()
         speak(get_weather(city))
+    elif "take picture" in user_input:
+        speak("Taking a picture now.")
+        subprocess.call(["python", "take_picture.py"])
     elif any(word in user_input for word in ["look up", "search", "tell me about", "what is", "who is"]):
         query = user_input
         for phrase in ["tell me about", "look up", "search for", "what is", "who is"]:
@@ -461,7 +466,7 @@ def handle_user_input(user_input):
 
 # === Main Loop ===
 def voice_assistant():
-    speak("Marvin voice assistant is ready. Say 'Marvin' to activate me.")
+    # speak("Marvin voice assistant is ready. Say 'Marvin' to activate me.")
     try:
         while True:
             if wait_for_face():
