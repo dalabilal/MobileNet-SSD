@@ -1,20 +1,14 @@
-# room_temperature.py
-
-import board
-import adafruit_dht
-
-# Initialize DHT22 sensor on GPIO4
-dht_sensor = adafruit_dht.DHT22(board.D4)
+import subprocess
 
 def get_room_temperature():
     try:
-        temperature = dht_sensor.temperature
-        humidity = dht_sensor.humidity
-        if temperature is not None and humidity is not None:
-            return f"The room temperature is {temperature:.1f}°C and the humidity is {humidity:.1f}%."
-        else:
-            return "Sorry, I couldn't read the temperature and humidity right now."
-    except RuntimeError as error:
-        return f"Sensor read error: {error.args[0]}"
+        dht22_python = "/home/smart/MagicMirror/modules/MMM-DHT22-Py/venv/bin/python"
+        dht22_script = "/home/smart/MagicMirror/modules/MMM-DHT22-Py/dht22_reader.py"
+
+        output = subprocess.check_output([dht22_python, dht22_script])
+        output = output.decode("utf-8").strip()
+
+        return f"The current {output.lower()}."
     except Exception as e:
-        return f"An error occurred while reading the temperature: {str(e)}"
+        print(f"[DHT22 ERROR] {e}")
+        return "Sorry, I couldn't get the room temperature right now."

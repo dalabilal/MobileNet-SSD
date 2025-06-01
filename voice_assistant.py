@@ -15,6 +15,8 @@ import numpy as np
 from sklearn.cluster import KMeans
 import RPi.GPIO as GPIO
 from DHT22sensor import get_room_temperature
+import tkinter as tk
+import pygame
 
 # Configure logging
 logging.basicConfig(
@@ -82,7 +84,7 @@ def wait_for_face():
         
         command = listen()
         if command and WAKE_WORD in command:
-            os.system("vcgencmd display_power 1")
+            fake_screen_on()
             speak("Yes? How can I assist you?")
             cap.release()
             cv2.destroyAllWindows()
@@ -90,8 +92,9 @@ def wait_for_face():
         
         # If face is detected
         if (len(faces) > 0 and GPIO.input(17)):
+                fake_screen_on()
                 print("Face detected!")
-                os.system("vcgencmd display_power 1")
+
                 speak("Hi there! How can I assist you?")
                 cap.release()
                 cv2.destroyAllWindows()
@@ -475,11 +478,33 @@ def handle_user_input(user_input):
             speak("I'm not sure how to help with that. You can ask me about the weather, time, or search for information.")
     return True
 
+
+blackout = None
+
+def fake_screen_off():
+    global blackout
+    pygame.init()
+    info = pygame.display.Info()
+    screen_width = info.current_w
+    screen_height = info.current_h
+
+    blackout = pygame.display.set_mode((screen_width, screen_height), pygame.NOFRAME)
+    pygame.display.set_caption("Blackout")
+    blackout.fill((0, 0, 0))
+    pygame.display.update()
+
+def fake_screen_on():
+    global blackout
+    pygame.quit()
+    blackout = None
+
+
 # === Main Loop ===
 def voice_assistant():
+    
     # speak("Marvin voice assistant is ready. Say 'Marvin' to activate me.")
     try:
-        os.system("vcgencmd display_power 0")
+        fake_screen_off()
         while True:
             if wait_for_face():
                 active = True
@@ -490,7 +515,7 @@ def voice_assistant():
                     else:
                         speak("I didn't catch that. Could you repeat?")
                 speak("Marvin is now in standby mode.")
-                os.system("vcgencmd display_power 0")
+                fake_screen_off()
     except KeyboardInterrupt:
         speak("Voice assistant shutting down. Goodbye!")
     except Exception as e:
