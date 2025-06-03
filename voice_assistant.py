@@ -475,7 +475,7 @@ def handle_user_input(user_input):
         if answer:
             speak(answer)
         else:
-            speak("I'm not sure how to help with that. You can ask me about the weather, time, or search for information.")
+            speak("I'm not sure how to help with that. You can ask me about the weather, time, room tempreture, your outfit or search for information.")
     return True
 
 
