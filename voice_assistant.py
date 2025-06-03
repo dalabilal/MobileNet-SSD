@@ -462,7 +462,7 @@ def handle_user_input(user_input):
                 break
         speak(f"Searching for information about {query}")
         speak(search_wikipedia(query))
-    elif "see me" in user_input or "analyze outfit" in user_input:
+    elif "check outfit" in user_input or "analyze outfit" in user_input:
         speak("Analyzing your outfit now.")
         analyze_outfit()
     elif "room temperature" in user_input or "temperature" in user_input:
